@@ -1,0 +1,30 @@
+name: 15Minutes
+options:
+  minimumXcodeGenVersion: 2.45.3
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    IPHONEOS_DEPLOYMENT_TARGET: 18.0
+    DEVELOPMENT_TEAM: ""
+targets:
+  15Minutes:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: 15Minutes
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.chad.15minutes
+        PRODUCT_NAME: 15 Minute Hockey
+        EXECUTABLE_NAME: 15MinuteHockey
+        MARKETING_VERSION: 1.2
+        CURRENT_PROJECT_VERSION: 3
+        TARGETED_DEVICE_FAMILY: 1
+        INFOPLIST_KEY_CFBundleDisplayName: 15 Min Hockey
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        GENERATE_INFOPLIST_FILE: true
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

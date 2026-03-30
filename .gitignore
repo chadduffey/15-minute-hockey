@@ -1,0 +1,12 @@
+.DS_Store
+
+# Xcode user data and build products
+DerivedData/
+build/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Local screenshots and export assets
+Screenshot *.png
+appstore-screens/
