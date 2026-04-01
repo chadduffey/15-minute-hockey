@@ -273,6 +273,7 @@ final class AppStore {
         friends = []
         reminderEnabled = false
         reminderTime = defaultReminderTime()
+        Task { await updateReminderSchedule() }
     }
 
     func updateReminderEnabled(_ enabled: Bool) async {
@@ -308,6 +309,8 @@ final class AppStore {
                 )
             )
         }
+
+        Task { await updateReminderSchedule() }
     }
 
     private var uniqueCompletedDays: [Date] {
@@ -394,30 +397,71 @@ final class AppStore {
     }
 
     private func updateReminderSchedule() async {
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: [Self.reminderIdentifier])
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: Self.reminderIdentifiers)
         guard reminderEnabled else { return }
 
         let settings = await notificationCenter.notificationSettings()
         guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else { return }
 
-        var components = calendar.dateComponents([.hour, .minute], from: reminderTime)
-        components.calendar = calendar
+        let dates = nextReminderDates(limit: Self.reminderIdentifiers.count)
 
-        let content = UNMutableNotificationContent()
-        content.title = "Time for your 15 minutes"
-        content.body = "A short field hockey session today keeps the streak moving."
-        content.sound = .default
+        for (index, reminderDate) in dates.enumerated() {
+            let content = UNMutableNotificationContent()
+            content.title = "Time for your 15 minutes"
+            content.body = "A short field hockey session today keeps the streak moving."
+            content.sound = .default
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
-        let request = UNNotificationRequest(identifier: Self.reminderIdentifier, content: content, trigger: trigger)
+            let trigger = UNCalendarNotificationTrigger(
+                dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: reminderDate),
+                repeats: false
+            )
 
-        try? await notificationCenter.add(request)
+            let request = UNNotificationRequest(
+                identifier: Self.reminderIdentifiers[index],
+                content: content,
+                trigger: trigger
+            )
+
+            try? await notificationCenter.add(request)
+        }
+    }
+
+    private func nextReminderDates(limit: Int) -> [Date] {
+        let startOfToday = calendar.startOfDay(for: Date())
+        let now = Date()
+        let reminderClock = calendar.dateComponents([.hour, .minute], from: reminderTime)
+        var dates: [Date] = []
+        var dayOffset = 0
+
+        while dates.count < limit, dayOffset < limit + 2 {
+            guard let day = calendar.date(byAdding: .day, value: dayOffset, to: startOfToday),
+                  let reminderDate = calendar.date(
+                    bySettingHour: reminderClock.hour ?? 19,
+                    minute: reminderClock.minute ?? 0,
+                    second: 0,
+                    of: day
+                  ) else {
+                dayOffset += 1
+                continue
+            }
+
+            let isToday = calendar.isDateInToday(day)
+            let shouldSkipToday = isToday && completedToday
+
+            if reminderDate > now && !shouldSkipToday {
+                dates.append(reminderDate)
+            }
+
+            dayOffset += 1
+        }
+
+        return dates
     }
 }
 
 private extension AppStore {
     static let snapshotKey = "app_store_snapshot_v1"
-    static let reminderIdentifier = "daily-practice-reminder"
+    static let reminderIdentifiers = (0..<7).map { "daily-practice-reminder-\($0)" }
 
     static let defaultSkills: [PracticeSkill] = [
         PracticeSkill(id: "goal-shooting", title: "Goal shooting", symbol: "scope", sortOrder: 0),
